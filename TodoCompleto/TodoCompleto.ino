@@ -7,6 +7,13 @@
  
 #include <SPI.h>  //Importamos librería comunicación SPI
 #include <Ethernet.h>  //Importamos librería Ethernet
+#include "Wire.h"
+#include "I2Cdev.h"
+#include "MPU6050.h"
+
+MPU6050 accelgyro;
+int16_t ax, ay, az;
+int16_t gx, gy, gz;
  
 byte mac[] = { 0x98, 0x4F, 0xEE, 0x01, 0xB7, 0x2D };//Ponemos la dirección MAC 
 IPAddress ip(192,168,0,101); //Asingamos la IP al Galileo
@@ -22,6 +29,7 @@ String estado="OFF"; //Estado del Led inicialmente "OFF"
  
 void setup()
 {
+  Wire.begin();
   Serial.begin(9600);
  
   // Inicializamos la comunicación Ethernet y el servidor
@@ -35,9 +43,22 @@ void setup()
  
 void loop()
 {
+
+  //Potenciometro
   potVal = analogRead(potPin);
   Serial.print("El valor del potenciometro es: ");
   Serial.println(potVal);
+  
+  //Acelerometro
+  accelgyro.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
+  Serial.print("a/g:\t");
+  Serial.print(ax); Serial.print("\t");
+  Serial.print(ay); Serial.print("\t");
+  Serial.print(az); Serial.print("\t");
+  Serial.print(gx); Serial.print("\t");
+  Serial.print(gy); Serial.print("\t");
+  Serial.println(gz);
+
   
   EthernetClient client = server.available(); //Creamos un cliente Web
   //Cuando detecte un cliente a través de una petición HTTP
@@ -97,6 +118,23 @@ void loop()
             client.println("<b>Potenciometro = ");
             client.print(potVal);
             client.println("</b><br />");
+//Acelerometro
+            client.println("<b>Acelerometro: ");
+            client.println("</b><br />");
+            client.println("<b>x = ");
+            client.print(ax);
+            client.println("<b> y = ");
+            client.print(ay);
+            client.println("<b> z = ");
+            client.print(az);
+            client.println("</b><br />");
+            client.println("<b> gx = ");
+            client.print(gx);
+            client.println("<b> gy = ");
+            client.print(gy);
+            client.println("<b> gz = ");
+            client.print(gz);
+              
             client.println("</b></body>");
             client.println("</html>");
             break;
