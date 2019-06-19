@@ -4,20 +4,28 @@
  Internet de las cosas
  
 */
- 
+//Ethernet
 #include <SPI.h>  //Importamos librería comunicación SPI
 #include <Ethernet.h>  //Importamos librería Ethernet
+byte mac[] = { 0x98, 0x4F, 0xEE, 0x01, 0xB7, 0x2D };//Ponemos la dirección MAC 
+IPAddress ip(192,168,0,100); //Asingamos la IP al Galileo
+EthernetServer server(80); //Creamos un servidor Web con el puerto 80 que es el puerto HTTP por defecto
+
+
+//Acelerometro
 #include "Wire.h"
 #include "I2Cdev.h"
 #include "MPU6050.h"
-
 MPU6050 accelgyro;
 int16_t ax, ay, az;
 int16_t gx, gy, gz;
- 
-byte mac[] = { 0x98, 0x4F, 0xEE, 0x01, 0xB7, 0x2D };//Ponemos la dirección MAC 
-IPAddress ip(192,168,0,101); //Asingamos la IP al Galileo
-EthernetServer server(80); //Creamos un servidor Web con el puerto 80 que es el puerto HTTP por defecto
+
+//DHT
+#include "DHT.h"
+#define DHTIN 2 
+#define DHTOUT 3
+#define DHTTYPE DHT11   // DHT 11 
+DHT dht(DHTIN,DHTOUT, DHTTYPE);
 
 //Potenciometro
 int potPin = A0;    // input pin para el potentiometro
@@ -59,7 +67,32 @@ void loop()
   Serial.print(gy); Serial.print("\t");
   Serial.println(gz);
 
-  
+  //DHT
+  float h = dht.readHumidity();
+  float t = dht.readTemperature();
+  float f = dht.readTemperature(true);
+  // Check if any reads failed and exit early (to try again).
+  if (isnan(h) || isnan(t) || isnan(f)) {
+    Serial.println("Failed to read from DHT sensor!");
+    return;
+  }
+  // Compute heat index
+  // Must send in temp in Fahrenheit!
+  float hi = dht.computeHeatIndex(f, h);
+  Serial.print("Humidity: "); 
+  Serial.print(h);
+  Serial.print(" %\t");
+  Serial.print("Temperature: "); 
+  Serial.print(t);
+  Serial.print(" *C ");
+  Serial.print(f);
+  Serial.print(" *F\t");
+  Serial.print("Heat index: ");
+  Serial.print(hi);
+  Serial.println(" *F");
+
+
+  //Servidor Web
   EthernetClient client = server.available(); //Creamos un cliente Web
   //Cuando detecte un cliente a través de una petición HTTP
   if (client) {
@@ -114,7 +147,6 @@ void loop()
             client.println("</b><br />");
 
 //Potenciometro
-           
             client.println("<b>Potenciometro = ");
             client.print(potVal);
             client.println("</b><br />");
@@ -134,7 +166,20 @@ void loop()
             client.print(gy);
             client.println("<b> gz = ");
             client.print(gz);
-              
+            client.println("</b><br />");
+//DHT
+            client.println("<b>DHT: ");
+            client.println("<b>Temperatura en *C: ");
+            client.print(t);
+            client.println("</b><br />");
+            client.println("<b>Temperatura en *F: ");
+            client.print(f);
+            client.println("</b><br />");
+            client.println("<b>Humedad en %: ");
+            client.print(h);
+            client.println("</b><br />");
+            client.println("<b>Indice de calor *F: ");
+            client.print(hi);
             client.println("</b></body>");
             client.println("</html>");
             break;
