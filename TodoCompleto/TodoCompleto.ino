@@ -34,6 +34,10 @@ int potVal = 0;  // variable para guardar el valor del potenciometro
 //LED
 int led=6; //Pin del led
 String estado="OFF"; //Estado del Led inicialmente "OFF"
+
+//Contacto
+int contacto = 7;
+int estado_contacto = 0;
  
 void setup()
 {
@@ -47,6 +51,7 @@ void setup()
   Serial.println(Ethernet.localIP());
  
   pinMode(led,OUTPUT);
+  pinMode(contacto,INPUT);
 }
  
 void loop()
@@ -54,18 +59,23 @@ void loop()
 
   //Potenciometro
   potVal = analogRead(potPin);
-  Serial.print("El valor del potenciometro es: ");
-  Serial.println(potVal);
+  Serial.print("Potenciometro: ");
+  Serial.print(potVal);
+
+  //Contacto
+  estado_contacto = digitalRead(contacto);
+   Serial.print("   Contacto: ");
+  Serial.print(estado_contacto);
   
   //Acelerometro
   accelgyro.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
-  Serial.print("a/g:\t");
+  Serial.print("    a/g:\t");
   Serial.print(ax); Serial.print("\t");
   Serial.print(ay); Serial.print("\t");
   Serial.print(az); Serial.print("\t");
   Serial.print(gx); Serial.print("\t");
   Serial.print(gy); Serial.print("\t");
-  Serial.println(gz);
+  Serial.print(gz);
 
   //DHT
   float h = dht.readHumidity();
@@ -73,13 +83,13 @@ void loop()
   float f = dht.readTemperature(true);
   // Check if any reads failed and exit early (to try again).
   if (isnan(h) || isnan(t) || isnan(f)) {
-    Serial.println("Failed to read from DHT sensor!");
+    Serial.println("    Failed to read from DHT sensor!");
     return;
   }
   // Compute heat index
   // Must send in temp in Fahrenheit!
   float hi = dht.computeHeatIndex(f, h);
-  Serial.print("Humidity: "); 
+  Serial.print("    Humidity: "); 
   Serial.print(h);
   Serial.print(" %\t");
   Serial.print("Temperature: "); 
@@ -132,7 +142,7 @@ void loop()
             client.println("<head>");
             client.println("</head>");
             client.println("<body>");
-            client.println("<h1 align='center'>Eugenio y Adrian :)</h1><h3 align='center'>LED controlado por Servidor Web con Arduino</h3>");
+            client.println("<h1 align='center'>Eugenio Martínez y Adrian Gonzalez </h1><h3 align='center'>Proyecto IoT</h3>");
             //Creamos los botones. Para enviar parametres a través de HTML se utiliza el metodo URL encode. Los parámetros se envian a través del símbolo '?'
             client.println("<div style='text-align:center;'>");
             client.println("<button onClick=location.href='./?LED=ON\' style='margin:auto;background-color: #84B1FF;color: snow;padding: 10px;border: 1px solid #3F7CFF;width:65px;'>");
@@ -149,6 +159,10 @@ void loop()
 //Potenciometro
             client.println("<b>Potenciometro = ");
             client.print(potVal);
+            client.println("</b><br />");
+//Contacto
+            client.println("<b>Contacto = ");
+            client.print(estado_contacto);
             client.println("</b><br />");
 //Acelerometro
             client.println("<b>Acelerometro: ");
